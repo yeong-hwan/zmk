@@ -32,7 +32,7 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Install yaml2json
         run: python3 -m pip install remarshal
@@ -43,7 +43,7 @@ jobs:
           set -x
           matrix=$(yaml2json ${{ inputs.build_matrix_path }} | jq -c .)
           yaml2json ${{ inputs.build_matrix_path }}
-          echo "::set-output name=matrix::${matrix}"
+          echo "matrix=${matrix}" >> $GITHUB_OUTPUT
 
   build:
     runs-on: ubuntu-latest
@@ -69,16 +69,18 @@ jobs:
             DISPLAY_NAME="${{ matrix.board }}"
             ARTIFACT_NAME="${{ matrix.board }}-zmk"
           fi
-          echo ::set-output name=extra-cmake-args::${EXTRA_CMAKE_ARGS}
-          echo ::set-output name=artifact-name::${ARTIFACT_NAME}
-          echo ::set-output name=display-name::${DISPLAY_NAME}
-          echo ::set-output name=zephyr-version::${ZEPHYR_VERSION}
+          {
+            echo "extra-cmake-args=${EXTRA_CMAKE_ARGS}"
+            echo "artifact-name=${ARTIFACT_NAME}"
+            echo "display-name=${DISPLAY_NAME}"
+            echo "zephyr-version=${ZEPHYR_VERSION}"
+          } >> $GITHUB_OUTPUT
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Cache west modules
-        uses: actions/cache@v3.0.2
+        uses: actions/cache@v4
         continue-on-error: true
         env:
           cache-name: cache-zephyr-${{ steps.variables.outputs.zephyr-version }}-modules
@@ -131,7 +133,7 @@ jobs:
           fi
 
       - name: Archive (${{ steps.variables.outputs.display-name }})
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.artifact_name }}
           path: build/artifacts
